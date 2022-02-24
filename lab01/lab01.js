@@ -1,10 +1,10 @@
 // 15 вариант
+
 const norma = 0.3;
 const x0 = 1;
 let N = 16; // кол-во всех возможных значений векторов
 w = [0, 0, 0, 0, 0]; // начальные веса
 let tTeacher = [1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0]; // значение t на наборах переменных
-
 
 // значения всех возможных наборов аргументов
 let X1 = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1];
@@ -14,24 +14,21 @@ let X4 = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1];
 
 // пороговая ФА
 function thresholdFunc(net) {
-    if (net > 0) {
-        return 1;
-    } else return 0;
+    if (net > 0) return 1;
+    else return 0;
 }
 
 // логистическая ФА
 function logisticFunc(net) {
-    if (net >= 0.5) {
-        return 1;
-    } else return 0;
+    if (net >= 0.5) return 1;
+    else return 0;
 }
 
 // hyperbolic tangent function
 function hyperbolicTangentOut(net) {
-    let out = 0;
-    out =  (((Math.exp(2 * net) - 1) /
+    return (((Math.exp(2 * net) - 1) /
         (Math.exp(2 * net) + 1)) + 1) * 0.5;
-    return out;
+
 }
 
 function CalculateNet(x1, x2, x3, x4, w) {
@@ -60,7 +57,6 @@ for (let i = 0; i < N; i++) {
 }
 
 let indexArrRandom = indexArr.shuffle();
-//console.log(indexArrRandom);
 
 function HammingDistance(t, y) { // считаем расстояние Хэмминга
     let E = 0;
@@ -73,7 +69,6 @@ function HammingDistance(t, y) { // считаем расстояние Хэмм
 }
 
 // ф-ия для перебора всех значений
-
 /*
 function stepsNeuralNetwork(X1, X2, X3, X4, N, w) {
     let y = 0;
@@ -118,11 +113,8 @@ function stepsNeuralNetwork(X1, X2, X3, X4, N, w) {
 
 // ф-ия для случайной выборки
 function stepsNeuralNetwork(X1, X2, X3, X4, N, w) {
-    let y = 0;
-    let t = 0;
-    let outputCurrentVector = [];
-    let outputVector = [];
-
+    let y = 0, t = 0;
+    let outputCurrentVector = [], outputVector = [];
     let countErrorInCurrentEra;
 
     for (let i = 0; i < N; i++) {
@@ -165,27 +157,14 @@ function stepsNeuralNetwork(X1, X2, X3, X4, N, w) {
 
 // ф-ия для случайной выборки
 function eraNeuralNetwork(weights) {
-    let k = 0;
-    let weightsNew = stepsNeuralNetwork(X1, X2, X3, X4, N, weights);
-    while (weightsNew.E !== 0) {
-        weightsNew = stepsNeuralNetwork(X1, X2, X3, X4, N, weights);
-        console.log(weightsNew, " эпоха №", k);
-        weights = weightsNew.weight;
+    let k = 0; // счетчик эпоъ
+    let era = stepsNeuralNetwork(X1, X2, X3, X4, N, weights);
+    while (era.E !== 0) {
+        era = stepsNeuralNetwork(X1, X2, X3, X4, N, weights);
+        console.log(era, " эпоха №", k);
+        weights = era.weight;
         k++;
     }
 }
-
-// ф-ия для перебора всех значений
-/*
-function eraNeuralNetwork(weights) {
-    let k = 0;
-    let weightsNew = stepsNeuralNetwork(X1, X2, X3, X4, N, weights);
-    while (weightsNew.E !== 0) {
-        weightsNew = stepsNeuralNetwork(X1, X2, X3, X4, N, weights);
-        console.log(weightsNew, " эпоха №", k);
-        weights = weightsNew.weight;
-        k++;
-    }
-*/
 
 eraNeuralNetwork(w);
