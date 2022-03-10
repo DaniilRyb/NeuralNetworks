@@ -1,56 +1,27 @@
-/*
-15 вариант
-исследовать функционирование простейшей нейронной сети (НС)
-на базе нейрона с нелинейной функцией активации и обучить ее по правилу Видроу - Хоффа
-*/
-
-const norma = 0.3
+const norm = 0.3
 const x0 = 1
 let N = 16 // кол-во всех возможных значений векторов
-w = [0, 0, 0, 0, 0] // начальные веса
+let w = [0, 0, 0, 0, 0] // начальные веса
 let tTeacher = [1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0] // значение t на наборах переменных
 
 // значения всех возможных наборов аргументов
-let X1 = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1]
+let X1 = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1] // 16 значения x1
 let X2 = [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1]
 let X3 = [0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1]
 let X4 = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
 
 // пороговая ФА
-const thresholdFunc = net => net > 0 ? 1 : 0
+const porogovayaFunc = net => net >= 0 ? 1 : 0
 
 // логистическая ФА
-const logisticFunc = net => net >= 0.5 ? 1 : 0
+const logisticFunc = out => out >= 0.5 ? 1 : 0
 
 // hyperbolic tangent function
+const hyperbolicTangentOut = x =>
+  (((Math.exp(x) - Math.exp(-x)) /
+    (Math.exp(x) + Math.exp(-x))) + 1) * 0.5
 
-const hyperbolicTangentOut = net =>
-  (((Math.exp(2 * net) - 1) /
-    (Math.exp(2 * net) + 1)) + 1) * 0.5
-
-function calculateNet(x1, x2, x3, x4, w) {
-    let net = 0
-    net += x1 * w[1] + x2 * w[2] + x3 * w[3] + x4 * w[4] + w[0]
-    return net
-}
-
-Array.prototype.shuffle = function () {
-    let input = this
-    for (let i = input.length - 1; i >= 0; i--) {
-        let randomIndex = Math.floor(Math.random() * (i + 1))
-        let itemAtIndex = input[randomIndex]
-        input[randomIndex] = input[i]
-        input[i] = itemAtIndex
-    }
-    return input
-}
-
-let indexArr = []
-for (let i = 0; i < N; i++) {
-    indexArr.push(i)
-}
-
-let indexArrRandom = indexArr.shuffle()
+const calculateNet = (x1, x2, x3, x4, w) => x1 * w[1] + x2 * w[2] + x3 * w[3] + x4 * w[4] + w[0]
 
 const hammingDistance = (t, y) => { // считаем расстояние Хэмминга
     let E = 0
@@ -63,72 +34,29 @@ const hammingDistance = (t, y) => { // считаем расстояние Хэ�
 }
 
 // ф-ия для перебора всех значений
-const stepsNeuralNetwork = (X1, X2, X3, X4, N, w) => {
-    let y = 0;
-    let outputVector = [];
-    for (let i = 0; i < N; i++) {
-        let x1 = X1[i];
-        let x2 = X2[i];
-        let x3 = X3[i];
-        let x4 = X4[i];
-        let net = calculateNet(x1, x2, x3, x4, w);
-        //y = thresholdFunc(net);
-        let out = hyperbolicTangentOut(net);
-        y = logisticFunc(net);
-        outputVector.push(y);
-        let t = tTeacher[i];
-        let delta = t - y;
-        if (delta !== 0) {
-            w[0] += norma * delta * x0;
-            w[1] += norma * delta * x1;
-            w[2] += norma * delta * x2;
-            w[3] += norma * delta * x3;
-            w[4] += norma * delta * x4;
-        } else {
-            w[0] = w[0];
-            w[1] = w[1];
-            w[2] = w[2];
-            w[3] = w[3];
-            w[4] = w[4];
-        }
-    }
-    let countErrorInCurrentEra = hammingDistance(tTeacher, outputVector);
-
-    return  {
-        weights: w,
-        E: countErrorInCurrentEra,
-        y: outputVector
-    };
-
-}
-
-// ф-ия для случайной выборки
-/*
-const stepsNeuralNetwork = (X1, X2, X3, X4, N, w) => {
-  let y = 0,
-    t = 0
-  let outputCurrentVector = [], outputVector = []
-  let countErrorInCurrentEra
-  let x1, x2, x3, x4
+/* const stepsNeuralNetwork = (X1, X2, X3, X4, N, w) => {
+  let y = 0, outputVector = []
   for (let i = 0; i < N; i++) {
-    x1 = X1[indexArrRandom[i]]
-    x2 = X2[indexArrRandom[i]]
-    x3 = X3[indexArrRandom[i]]
-    x4 = X4[indexArrRandom[i]]
+    let x1 = X1[i], x2 = X2[i], x3 = X3[i], x4 = X4[i]
     let net = calculateNet(x1, x2, x3, x4, w)
     let out = hyperbolicTangentOut(net)
-    y = thresholdFunc(out)
-    // y = logisticFunc(net);
-    outputCurrentVector.push(y)
-    t = tTeacher[indexArrRandom[i]]
-    outputVector.push(t)
-    let delta = t - y
-    if (delta !== 0) {
-      w[0] += norma * delta * x0
-      w[1] += norma * delta * x1
-      w[2] += norma * delta * x2
-      w[3] += norma * delta * x3
-      w[4] += norma * delta * x4
+    y = logisticFunc(out)
+    outputVector.push(y)
+    let t = tTeacher[i]
+    let d = t - y
+    if (d !== 0) {
+
+      w[0] += norm * delta * x0
+      w[1] += norm * delta * x1
+      w[2] += norm * delta * x2
+      w[3] += norm * delta * x3
+      w[4] += norm * delta * x4
+
+      w[0] += norm * d * x0 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
+      w[1] += norm * d * x1 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
+      w[2] += norm * d * x2 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
+      w[3] += norm * d * x3 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
+      w[4] += norm * d * x4 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
     } else {
       w[0] = w[0]
       w[1] = w[1]
@@ -137,31 +65,113 @@ const stepsNeuralNetwork = (X1, X2, X3, X4, N, w) => {
       w[4] = w[4]
     }
   }
-
-  countErrorInCurrentEra = hammingDistance(outputVector, outputCurrentVector)
+  let countErrorInCurrentEra = hammingDistance(tTeacher, outputVector)
 
   return {
     weights: w,
     E: countErrorInCurrentEra,
-    y: outputCurrentVector,
-    t: outputVector
+    y: outputVector
+  }
+
+} */
+
+/*
+const stepsNeuralNetwork = (X1, X2, X3, X4, N, w) => {
+  let y = 0, outputVector = [], index = []
+  for (let i = 0; i < N; i++) {
+    let x1 = X1[i], x2 = X2[i], x3 = X3[i], x4 = X4[i]
+    let net = calculateNet(x1, x2, x3, x4, w)
+    let out = hyperbolicTangentOut(net)
+    y = logisticFunc(out)
+    outputVector.push(y)
+    let t = tTeacher[i]
+    let d = t - y
+    if (d !== 0) {
+
+     /!* w[0] += norm * delta * x0
+      w[1] += norm * delta * x1
+      w[2] += norm * delta * x2
+      w[3] += norm * delta * x3
+      w[4] += norm * delta * x4
+*!/
+      w[0] += norm * d * x0 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
+      w[1] += norm * d * x1 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
+      w[2] += norm * d * x2 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
+      w[3] += norm * d * x3 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
+      w[4] += norm * d * x4 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
+    } else {
+      w[0] = w[0]
+      w[1] = w[1]
+      w[2] = w[2]
+      w[3] = w[3]
+      w[4] = w[4]
+    }
+  }
+  let countErrorInCurrentEra = hammingDistance(tTeacher, outputVector)
+
+  return {
+    weights: w,
+    E: countErrorInCurrentEra,
+    y: outputVector
   }
 
 }
 */
 
-const eraNeuralNetwork = weights => {
+const stepsNeuralNetwork = (X1, X2, X3, X4, N, w, iPos) => {
+    let y = 0, outputVector = []
+    for (let i = iPos, j = 0; i < N, j < N; i++, j++) {
+        let x1 = X1[i], x2 = X2[i], x3 = X3[i], x4 = X4[i]
+        let net = calculateNet(x1, x2, x3, x4, w)
+        let out = hyperbolicTangentOut(net)
+        y = logisticFunc(out)
+        outputVector.push(y)
+        let t = tTeacher[j]
+        let d = t - y
+        if (d !== 0) {
+
+            /* w[0] += norm * delta * x0
+             w[1] += norm * delta * x1
+             w[2] += norm * delta * x2
+             w[3] += norm * delta * x3
+             w[4] += norm * delta * x4
+       */
+            w[0] += norm * d * x0 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
+            w[1] += norm * d * x1 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
+            w[2] += norm * d * x2 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
+            w[3] += norm * d * x3 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
+            w[4] += norm * d * x4 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
+        } else {
+            w[0] = w[0]
+            w[1] = w[1]
+            w[2] = w[2]
+            w[3] = w[3]
+            w[4] = w[4]
+        }
+    }
+    let countErrorInCurrentEra = hammingDistance(tTeacher, outputVector)
+
+    return {
+        weights: w,
+        E: countErrorInCurrentEra,
+        y: outputVector
+    }
+
+}
+
+const eraNeuralNetwork = (weights, X1, X2, X3, X4, iPos) => {
     let k = 0 // счетчик эпох
-    let era = stepsNeuralNetwork(X1, X2, X3, X4, N, weights)
+    let era = {}
     while (era.E !== 0) {
-        era = stepsNeuralNetwork(X1, X2, X3, X4, N, weights)
+        era = stepsNeuralNetwork(X1, X2, X3, X4, X1.length, weights, iPos)
         console.log(era, 'эпоха ', k)
         weights = era.weights
         k++
+        if (k > 150) break
     }
 }
 
 let timeStart = new Date()
-eraNeuralNetwork(w)
+eraNeuralNetwork(w, X1, X2, X3, X4, 0)
 let timeEnd = new Date()
-console.log('время выполнения программы:', timeEnd - timeStart, 'миллисекунд')
+console.log('время выполнения программы:', (timeEnd - timeStart).toString(), 'миллисекунд')
