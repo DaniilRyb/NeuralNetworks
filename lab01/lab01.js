@@ -17,8 +17,8 @@ const logisticFunc = out => out >= 0.5 ? 1 : 0
 
 // hyperbolic tangent function
 const hyperbolicTangentOut = x =>
-  (((Math.exp(x) - Math.exp(-x)) /
-    (Math.exp(x) + Math.exp(-x))) + 1) * 0.5
+    (((Math.exp(x) - Math.exp(-x)) /
+        (Math.exp(x) + Math.exp(-x))) + 1) * 0.5
 
 const calculateNet = (x1, x2, x3, x4, w) => x1 * w[1] + x2 * w[2] + x3 * w[3] + x4 * w[4] + w[0]
 
@@ -32,19 +32,20 @@ const hammingDistance = (t, y) => { // считаем расстояние Хэ�
   return E
 }
 
-const stepsNeuralNetwork = (X1, X2, X3, X4, w, N) => {
+const stepsNeuralNetwork = (X1, X2, X3, X4, w, combination) => {
   let y = 0, outputVector = [], vectorT = []
-  for (let i = 0; i < N; i++) {
-    let x1 = X1[i], x2 = X2[i],
-      x3 = X3[i], x4 = X4[i]
+  for (let i = 0; i < combination.length; i++) {
+    let x1 = X1[combination[i]], x2 = X2[combination[i]],
+        x3 = X3[combination[i]], x4 = X4[combination[i]]
     let net = calculateNet(x1, x2, x3, x4, w)
     //let out = hyperbolicTangentOut(net)
     y = porogovayaFunc(net)
     outputVector.push(y)
-    let t = tTeacher[i]
+    let t = tTeacher[combination[i]]
     vectorT.push(t)
     let delta = t - y
     if (delta !== 0) {
+
       w[0] += norm * delta * x0
       w[1] += norm * delta * x1
       w[2] += norm * delta * x2
@@ -56,8 +57,8 @@ const stepsNeuralNetwork = (X1, X2, X3, X4, w, N) => {
       w[2] += norm * delta * x2 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
       w[3] += norm * delta * x3 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
       w[4] += norm * delta * x4 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
-
-    */ } else {
+    */
+    } else {
       w[0] = w[0]
       w[1] = w[1]
       w[2] = w[2]
@@ -76,21 +77,46 @@ const stepsNeuralNetwork = (X1, X2, X3, X4, w, N) => {
 
 }
 
-const eraNeuralNetwork = (weights, N) => {
+const eraNeuralNetwork = (weights, combination) => {
   let era = {}
   let k = 0;
   while (era.Error !== 0) {
-    era = stepsNeuralNetwork(X1, X2, X3, X4, weights, N)
+    era = stepsNeuralNetwork(X1, X2, X3, X4, weights, combination)
     console.log(era, 'эпоха ', k)
     weights = era.weights
     k++
     if (k > 150) break
   }
+  return combination
 }
 
-for (let i = N; i > 1; i--) {
-  let w = [0, 0, 0, 0, 0] // начальные веса
-  console.log('---------------------------------------------------------------------------------------')
-  eraNeuralNetwork(w, i)
-  w = [0, 0, 0, 0, 0]
+function* combinationN(array, n) {
+  if (n === 1) {
+    for (const a of array) {
+      yield [a];
+    }
+    return;
+  }
+
+  for (let i = 0; i <= array.length - n; i++) {
+    for (const c of combinationN(array.slice(i + 1), n - 1)) {
+      yield [array[i], ...c];
+    }
+  }
+}
+
+function* combination_ordered(array) {
+  for (let i = 1; i <= array.length; i++) {
+    yield* combinationN(array, i);
+  }
+}
+
+let index = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+
+let generator = combination_ordered(index)
+
+for (let combination of generator) {
+  let weight = [0, 0, 0, 0, 0]
+  eraNeuralNetwork(weight, combination)
+  weight = [0, 0, 0, 0, 0]
 }
