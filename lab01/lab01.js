@@ -23,100 +23,147 @@ const hyperbolicTangentOut = x =>
 const calculateNet = (x1, x2, x3, x4, w) => x1 * w[1] + x2 * w[2] + x3 * w[3] + x4 * w[4] + w[0]
 
 const hammingDistance = (t, y) => { // считаем расстояние Хэмминга
-  let E = 0
-  for (let i = 0; i < t.length; i++) {
-    if (t[i] !== y[i]) {
-      E++
+    let E = 0
+    for (let i = 0; i < t.length; i++) {
+        if (t[i] !== y[i]) {
+            E++
+        }
     }
-  }
-  return E
+    return E
 }
 
 const stepsNeuralNetwork = (X1, X2, X3, X4, w, combination) => {
-  let y = 0, outputVector = [], vectorT = []
-  for (let i = 0; i < combination.length; i++) {
-    let x1 = X1[combination[i]], x2 = X2[combination[i]],
-        x3 = X3[combination[i]], x4 = X4[combination[i]]
-    let net = calculateNet(x1, x2, x3, x4, w)
-    //let out = hyperbolicTangentOut(net)
-    y = porogovayaFunc(net)
-    outputVector.push(y)
-    let t = tTeacher[combination[i]]
-    vectorT.push(t)
-    let delta = t - y
-    if (delta !== 0) {
+    let y = 0, outputVector = [], vectorT = []
+    for (let i = 0; i < combination.length; i++) {
+        let x1 = X1[combination[i]], x2 = X2[combination[i]],
+            x3 = X3[combination[i]], x4 = X4[combination[i]]
+        let net = calculateNet(x1, x2, x3, x4, w)
+        //let out = hyperbolicTangentOut(net)
+        y = porogovayaFunc(net)
+        outputVector.push(y)
+        let t = tTeacher[combination[i]]
+        vectorT.push(t)
+        let delta = t - y
+        if (delta !== 0) {
 
-      w[0] += norm * delta * x0
-      w[1] += norm * delta * x1
-      w[2] += norm * delta * x2
-      w[3] += norm * delta * x3
-      w[4] += norm * delta * x4
-
-      /* w[0] += norm * delta * x0 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
-      w[1] += norm * delta * x1 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
-      w[2] += norm * delta * x2 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
-      w[3] += norm * delta * x3 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
-      w[4] += norm * delta * x4 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
-    */
-    } else {
-      w[0] = w[0]
-      w[1] = w[1]
-      w[2] = w[2]
-      w[3] = w[3]
-      w[4] = w[4]
+            w[0] += norm * delta * x0
+            w[1] += norm * delta * x1
+            w[2] += norm * delta * x2
+            w[3] += norm * delta * x3
+            w[4] += norm * delta * x4
+            /*
+                       w[0] += norm * delta * x0 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
+                       w[1] += norm * delta * x1 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
+                       w[2] += norm * delta * x2 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
+                       w[3] += norm * delta * x3 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
+                       w[4] += norm * delta * x4 * (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))*/
+        } else {
+            w[0] = w[0]
+            w[1] = w[1]
+            w[2] = w[2]
+            w[3] = w[3]
+            w[4] = w[4]
+        }
     }
-  }
 
-  let countsErrorInCurrentEra = hammingDistance(vectorT, outputVector)
+    let countsErrorInCurrentEra = hammingDistance(vectorT, outputVector)
 
-  return {
-    weights: w,
-    Error: countsErrorInCurrentEra,
-    y: outputVector
-  }
+    return {
+        weights: w,
+        Error: countsErrorInCurrentEra,
+        y: outputVector
+    }
 
 }
+
+const searchNetworkMinVector = w => {
+    let y = 0,
+        outputVector = [],
+        vectorT = []
+    for (let i = 0; i < 16; i++) {
+        let x1 = X1[i], x2 = X2[i],
+            x3 = X3[i], x4 = X4[i]
+        let net = calculateNet(x1, x2, x3, x4, w)
+        //let out = hyperbolicTangentOut(net)
+        y = porogovayaFunc(net)
+        outputVector.push(y)
+        let t = tTeacher[i]
+        vectorT.push(t)
+    }
+
+    let countsErrorInCurrentEra = hammingDistance(vectorT, outputVector)
+
+    return {
+        weights: w,
+        Error: countsErrorInCurrentEra,
+        y: outputVector
+    }
+
+}
+
 
 const eraNeuralNetwork = (weights, combination) => {
-  let era = {}
-  let k = 0;
-  while (era.Error !== 0) {
-    era = stepsNeuralNetwork(X1, X2, X3, X4, weights, combination)
-    console.log(era, 'эпоха ', k)
-    weights = era.weights
-    k++
-    if (k > 150) break
-  }
-  return combination
+    let era = {}
+    let k = 0;
+    while (era.Error !== 0) {
+        era = stepsNeuralNetwork(X1, X2, X3, X4, weights, combination)
+        //console.log(era, 'эпоха ', k)
+        weights = era.weights
+        k++
+        if (k > 150) break
+    }
+    return [weights, combination, k]
+
 }
 
-function* combinationN(array, n) {
-  if (n === 1) {
-    for (const a of array) {
-      yield [a];
+/*const eraNeuralNetwork = weights => {
+    let era = {}
+    let k = 0;
+    while (era.Error !== 0) {
+        era = stepsNeuralNetwork(X1, X2, X3, X4, weights, N)
+        console.log(era, 'эпоха ', k)
+        weights = era.weights
+        k++
+        if (k > 150) break
     }
-    return;
-  }
+    return weights
 
-  for (let i = 0; i <= array.length - n; i++) {
-    for (const c of combinationN(array.slice(i + 1), n - 1)) {
-      yield [array[i], ...c];
+}*/
+
+
+function* combinationN(array, n) {
+    if (n === 1) {
+        for (const a of array) {
+            yield [a];
+        }
+        return;
     }
-  }
+
+    for (let i = 0; i <= array.length - n; i++) {
+        for (const c of combinationN(array.slice(i + 1), n - 1)) {
+            yield [array[i], ...c];
+        }
+    }
 }
 
 function* combination_ordered(array) {
-  for (let i = 1; i <= array.length; i++) {
-    yield* combinationN(array, i);
-  }
+    for (let i = 1; i <= array.length; i++) {
+        yield* combinationN(array, i);
+    }
 }
 
 let index = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 
 let generator = combination_ordered(index)
 
+let eraSearchVector = {}
 for (let combination of generator) {
-  let weight = [0, 0, 0, 0, 0]
-  eraNeuralNetwork(weight, combination)
-  weight = [0, 0, 0, 0, 0]
+    let weight = [0, 0, 0, 0, 0]
+    eraSearchVector = eraNeuralNetwork(weight, combination)
+    let minVector = searchNetworkMinVector(eraSearchVector[0])
+    if (minVector.Error !== 0) continue
+    else break
 }
+
+console.log("найденные веса: " + eraSearchVector[0] + "\n",
+    "индексы минимальных векторов: " + eraSearchVector[1] + "\n", "количество эпох: " + eraSearchVector[2])
