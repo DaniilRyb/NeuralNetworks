@@ -101,7 +101,6 @@ const searchNetworkMinVector = w => {
 
 }
 
-
 const eraNeuralNetwork = (weights, combination) => {
     let era = {}
     let k = 0;
