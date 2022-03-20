@@ -176,8 +176,8 @@ let combinations_generator = combinations(index)
 
 let eraSearchVector = {}
 for (let combinations of combinations_generator) {
-    let V_coeff = [0, 0, 0, 0, 0, 0, 0, 0]
-    eraSearchVector = eraNeuralNetwork(V_coeff, combinations)
+    let V = [0, 0, 0, 0, 0, 0, 0, 0]
+    eraSearchVector = eraNeuralNetwork(V, combinations)
     let minVector = learningNetworkMinVector(eraSearchVector.coefficient)
     if (minVector.Error !== 0) continue
     else break
@@ -187,3 +187,70 @@ console.log("найденные синаптические веса: "
     + eraSearchVector.coefficient + "\n",
     "индексы минимальных векторов: " + eraSearchVector.combination + "\n",
     "количество эпох: " + eraSearchVector.Epoch_count)
+
+
+const NeuralNetwork = (X1, X2, X3, X4, coeff) => {
+    let y = 0,
+        outputVector = [],
+        vectorT = []
+
+    for (let i = 0; i < 16; i++) {
+        let X = [X1[i], X2[i], X3[i], X4[i]]
+        let net = calculateNet(Cji, coeff, X)
+        //let out = hyperbolicTangentOut(net)
+        y = porogovayaFunc(net)
+        outputVector.push(y)
+        let t = tTeacher[i]
+        vectorT.push(t)
+        let beta = t - y
+        if (beta !== 0) {
+
+            coeff[0] += learning_rate * beta * fi0
+            for (let i = 1; i < coeff.length; i++) {
+                coeff[i] += learning_rate * beta * fiCalculation(X, Cji, i - 1)
+            }
+            /*
+                        coeff[0] += learning_rate * beta * fi0 *
+                            (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
+                        for (let i = 1; i < coeff.length; i++) {
+                            coeff[i] += learning_rate * beta * fiCalculation(X, Cji, i - 1) *
+                                (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
+                        }*/
+
+        } else {
+            for (let i = 0; i < coeff.length; i++)
+                coeff[i] = coeff[i]
+        }
+    }
+
+    let countsErrorInCurrentEra = hammingDistance(vectorT, outputVector)
+
+    return {
+        coefficients: coeff,
+        Error: countsErrorInCurrentEra,
+        y: outputVector
+    }
+
+}
+
+
+const weightNeuralNetwork = coefficient => {
+
+    let currentEra = {},
+        k = 0;
+
+    while (currentEra.Error !== 0) {
+        currentEra = NeuralNetwork(X1, X2, X3, X4, coefficient)
+        console.log(currentEra, 'эпоха ', k)
+        if (k > 150) break
+        k++
+        coefficient = currentEra.coefficients
+    }
+
+    return {
+        coefficient: coefficient,
+        Epoch_count: k
+    }
+}
+
+weightNeuralNetwork([0, 0, 0, 0, 0, 0, 0, 0])
