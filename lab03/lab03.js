@@ -11,14 +11,13 @@ let X2 = [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1]
 let X3 = [0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1]
 let X4 = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
 
-let Cji = [[1, 1, 0, 0],
+let Cji = [[0, 0, 1, 1],
     [0, 1, 1, 0],
-    [1, 1, 1, 0],
-    [0, 1, 0, 1],
-    [1, 1, 0, 1],
     [0, 1, 1, 1],
+    [1, 0, 1, 0],
+    [1, 0, 1, 1],
+    [1, 1, 1, 0],
     [1, 1, 1, 1]]
-
 
 const porogovayaFunc = net => net >= 0 ? 1 : 0
 
@@ -61,36 +60,28 @@ const stepsMinVectorNeuralNetwork = (X1, X2, X3, X4, coeff, combination) => {
         vectorT = []
 
     for (let i = 0; i < combination.length; i++) {
-        let X = [X1[combination[i]],
-            X2[combination[i]],
-            X3[combination[i]],
-            X4[combination[i]]]
-        let net = calculateNet(Cji, coeff, X)
-        //let out = hyperbolicTangentOut(net)
-        y = porogovayaFunc(net)
+        let x1 = X1[combination[i]], x2 = X2[combination[i]],
+            x3 = X3[combination[i]], x4 = X4[combination[i]]
+        let net = calculateNet(Cji, coeff, [x1, x2, x3, x4])
+        let out = hyperbolicTangentOut(net)
+        y = logisticFunc(out)
         outputVector.push(y)
         let t = tTeacher[combination[i]]
         vectorT.push(t)
         let beta = t - y
         if (beta !== 0) {
 
-            coeff[0] += learning_rate * beta * fi0
+            /*coeff[0] += learning_rate * beta * fi0
             for (let i = 1; i < coeff.length; i++) {
-                coeff[i] += learning_rate * beta * fiCalculation(X, Cji, i - 1)
+                coeff[i] += learning_rate * beta * fiCalculation([x1, x2, x3, x4], Cji, i - 1)
+            }*/
+
+            coeff[0] += learning_rate * beta * fi0 *
+                (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
+            for (let i = 1; i < coeff.length; i++) {
+                coeff[i] += learning_rate * beta * fiCalculation([x1, x2, x3, x4], Cji, i - 1) *
+                    (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
             }
-
-            /*
-                        coeff[0] += learning_rate * beta * fi0 *
-                            (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
-                        for (let i = 1; i < coeff.length; i++) {
-                            coeff[i] += learning_rate * beta * fiCalculation(X, Cji, i - 1) *
-                                (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
-                        }
-            */
-
-        } else {
-            for (let i = 0; i < coeff.length; i++)
-                coeff[i] = coeff[i]
         }
     }
 
@@ -104,7 +95,7 @@ const stepsMinVectorNeuralNetwork = (X1, X2, X3, X4, coeff, combination) => {
 
 }
 
-const learningNetworkMinVector = V => {
+const checkCoeffNetworkMinVector = V => {
     let y = 0,
         outputVector = [],
         vectorT = []
@@ -112,8 +103,8 @@ const learningNetworkMinVector = V => {
         let x1 = X1[i], x2 = X2[i],
             x3 = X3[i], x4 = X4[i]
         let net = calculateNet(Cji, V, [x1, x2, x3, x4])
-        //let out = hyperbolicTangentOut(net)
-        y = porogovayaFunc(net)
+        let out = hyperbolicTangentOut(net)
+        y = logisticFunc(out)
         outputVector.push(y)
         let t = tTeacher[i]
         vectorT.push(t)
@@ -137,8 +128,8 @@ const eraNeuralNetwork = (coefficient, combination) => {
     while (currentEra.Error !== 0) {
         currentEra = stepsMinVectorNeuralNetwork(X1, X2, X3, X4, coefficient, combination)
         console.log(currentEra, 'эпоха ', k)
-        k++
         if (k > 150) break
+        k++
         coefficient = currentEra.coefficients
     }
 
@@ -178,7 +169,7 @@ let eraSearchVector = {}
 for (let combinations of combinations_generator) {
     let V = [0, 0, 0, 0, 0, 0, 0, 0]
     eraSearchVector = eraNeuralNetwork(V, combinations)
-    let minVector = learningNetworkMinVector(eraSearchVector.coefficient)
+    let minVector = checkCoeffNetworkMinVector(eraSearchVector.coefficient)
     if (minVector.Error !== 0) continue
     else break
 }
@@ -188,38 +179,34 @@ console.log("найденные синаптические веса: "
     "индексы минимальных векторов: " + eraSearchVector.combination + "\n",
     "количество эпох: " + eraSearchVector.Epoch_count)
 
-
-const NeuralNetwork = (X1, X2, X3, X4, coeff) => {
+const NeuralNetwork = coeff => {
     let y = 0,
         outputVector = [],
         vectorT = []
 
     for (let i = 0; i < 16; i++) {
-        let X = [X1[i], X2[i], X3[i], X4[i]]
-        let net = calculateNet(Cji, coeff, X)
-        //let out = hyperbolicTangentOut(net)
-        y = porogovayaFunc(net)
+        let x1 = X1[i], x2 = X2[i],
+            x3 = X3[i], x4 = X4[i]
+        let net = calculateNet(Cji, coeff, [x1, x2, x3, x4])
+        let out = hyperbolicTangentOut(net)
+        y = logisticFunc(out)
         outputVector.push(y)
         let t = tTeacher[i]
         vectorT.push(t)
         let beta = t - y
         if (beta !== 0) {
 
-            coeff[0] += learning_rate * beta * fi0
+            /*coeff[0] += learning_rate * beta * fi0
             for (let i = 1; i < coeff.length; i++) {
-                coeff[i] += learning_rate * beta * fiCalculation(X, Cji, i - 1)
-            }
-            /*
-                        coeff[0] += learning_rate * beta * fi0 *
-                            (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
-                        for (let i = 1; i < coeff.length; i++) {
-                            coeff[i] += learning_rate * beta * fiCalculation(X, Cji, i - 1) *
-                                (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
-                        }*/
+                coeff[i] += learning_rate * beta * fiCalculation[x1, x2, x3, x4], Cji, i - 1)
+            }*/
 
-        } else {
-            for (let i = 0; i < coeff.length; i++)
-                coeff[i] = coeff[i]
+            coeff[0] += learning_rate * beta * fi0 *
+                (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
+            for (let i = 1; i < coeff.length; i++) {
+                coeff[i] += learning_rate * beta * fiCalculation([x1, x2, x3, x4], Cji, i - 1) *
+                    (1 / (2 * Math.pow(((Math.exp(net) + Math.exp(-net)) / 2), 2)))
+            }
         }
     }
 
@@ -233,14 +220,13 @@ const NeuralNetwork = (X1, X2, X3, X4, coeff) => {
 
 }
 
-
-const weightNeuralNetwork = coefficient => {
+const coefficientNeuralNetwork = coefficient => {
 
     let currentEra = {},
         k = 0;
 
     while (currentEra.Error !== 0) {
-        currentEra = NeuralNetwork(X1, X2, X3, X4, coefficient)
+        currentEra = NeuralNetwork(coefficient)
         console.log(currentEra, 'эпоха ', k)
         if (k > 150) break
         k++
@@ -253,4 +239,5 @@ const weightNeuralNetwork = coefficient => {
     }
 }
 
-weightNeuralNetwork([0, 0, 0, 0, 0, 0, 0, 0])
+let V = [0, 0, 0, 0, 0, 0, 0, 0]
+coefficientNeuralNetwork(V)
