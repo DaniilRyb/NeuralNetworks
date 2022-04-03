@@ -14,8 +14,6 @@ let hyperbolicTangentOut = x =>
     (((Math.exp(x) - Math.exp(-x)) /
         (Math.exp(x) + Math.exp(-x))) + 1) * 0.5
 
-//let netCalc = (x, w11, w01) => w11 * x + w01 * 1
-
 let errorEpsilonCalculation = (M, t_j, yj_k) => {
     let sum = 0
     for (let i = 0; i < M; i++) {
@@ -24,20 +22,20 @@ let errorEpsilonCalculation = (M, t_j, yj_k) => {
     return Math.pow(sum, 0.5)
 }
 
-let backPropagation = weight => {
+let backPropagation = weights => {
 
     let w11_1, w01_1,
         w11_2, w12_2, w13_2,
         w01_2, w02_2, w03_2
 
-    w11_1 = weight[0]
-    w01_1 = weight[1]
-    w11_2 = weight[2]
-    w12_2 = weight[3]
-    w13_2 = weight[4]
-    w01_2 = weight[5]
-    w02_2 = weight[6]
-    w03_2 = weight[7]
+    w11_1 = weights[0]
+    w01_1 = weights[1]
+    w11_2 = weights[2]
+    w12_2 = weights[3]
+    w13_2 = weights[4]
+    w01_2 = weights[5]
+    w02_2 = weights[6]
+    w03_2 = weights[7]
 
     let net1_1 = w11_1 * x1_1 + w01_1 * 1
     let x1_2 = hyperbolicTangentOut(net1_1)
@@ -65,47 +63,50 @@ let backPropagation = weight => {
 
     let epsilon = errorEpsilonCalculation(3, t_j, yj_k)
 
-    console.log(epsilon)
 
     // коррекция весов 1 слоя
     w11_1 += learning_rate * x1_1 * delta1_1
-    w01_1 += learning_rate * 1 * delta1_1
+    w01_1 += learning_rate * delta1_1
 
     // коррекция весов 2 слоя
     w11_2 += learning_rate * x1_2 * delta1
-    w01_2 += learning_rate * 1 * delta1
+    w01_2 += learning_rate * delta1
     w12_2 += learning_rate * x1_2 * delta2
-    w02_2 += learning_rate * 1 * delta2
+    w02_2 += learning_rate * delta2
     w13_2 += learning_rate * x1_2 * delta3
-    w03_2 += learning_rate * 1 * delta3
+    w03_2 += learning_rate * delta3
 
-    weight = [w11_1, w01_1, w11_2, w01_2,
+    weights = [w11_1, w01_1, w11_2, w01_2,
         w12_2, w02_2, w13_2, w03_2]
 
-    let currentWeight = {
-        currentWeight: weight,
-        yOutputVector: yj_k
-    }
 
-    console.log(currentWeight)
+    /*
+        console.log('Y=' + currentWeight.yOutputVector,
+            'E=' + epsilon, 'weights=' + currentWeight.weights + '\n')
+    */
 
     return {
-        weight: weight,
+        weight: weights,
+        yOutputVector: yj_k,
         epsilon: epsilon
     }
 }
 
-let epochLearningNeuralNetwork = weight => {
+let valueErrorVector = []
+let epochLearningNeuralNetwork = weights => {
     let countEpoch = 0,
         valueError = 1
     do {
-        let currentBackPropagationEpoch = backPropagation(weight)
+        let currentBackPropagationEpoch = backPropagation(weights)
         countEpoch++
+        /*console.log('Epoch=' + countEpoch, 'Y=' + currentBackPropagationEpoch.yOutputVector,
+            'E=' + valueError, 'weights=' + currentBackPropagationEpoch.weight + '\n')*/
         if (countEpoch > 150) break
-        console.log("current count epoch", countEpoch)
-        weight = currentBackPropagationEpoch.weight
+        weights = currentBackPropagationEpoch.weight
         valueError = currentBackPropagationEpoch.epsilon
+        valueErrorVector.push(valueError)
     } while (valueError > 1e-3)
 }
 
 epochLearningNeuralNetwork([0, 0, 0, 0, 0, 0, 0, 0])
+//console.log(valueErrorVector)
