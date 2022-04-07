@@ -4,9 +4,17 @@ xInputVector  = (1, –3)
 yOutputVector = (0.1, 0.1, 0.1)
 */
 
-const hyperbolicTangentOut = x =>
-    ((((Math.exp(x) - Math.exp(-x)) /
-        (Math.exp(x) + Math.exp(-x))) + 1) * 0.5)
+/*
+const hyperbolicTangentOut = net =>
+    ((((Math.exp(net) - Math.exp(-net)) /
+        (Math.exp(net) + Math.exp(-net))) + 1) * 0.5)
+*/
+
+const activationFunc = net =>
+    ((1 - Math.exp(-net)) / (1 + Math.exp(-net)))
+
+const derivativeActivationFunc = net =>
+    0.5 * (1 - Math.pow(activationFunc(net), 2))
 
 const errorEpsilonCalculation = (M, t_j, yj_k) => {
     let sum = 0
@@ -35,18 +43,18 @@ const methodBackPropagation = (weights, learning_rate) => {
     w03_2 = weights[7]
 
     let net1_1 = w11_1 * x1 + w01_1 * x2,
-        x1_2 = hyperbolicTangentOut(net1_1),
+        x1_2 = activationFunc(net1_1),
         net1_2 = w11_2 * x1_2 + w01_2 * 1,
         net2_2 = w12_2 * x1_2 + w02_2 * 1,
         net3_2 = w13_2 * x1_2 + w03_2 * 1
 
-    let y1 = hyperbolicTangentOut(net1_2),
-        y2 = hyperbolicTangentOut(net2_2),
-        y3 = hyperbolicTangentOut(net3_2),
+    let y1 = activationFunc(net1_2),
+        y2 = activationFunc(net2_2),
+        y3 = activationFunc(net3_2),
 
         yj_k = [y1, y2, y3],
 
-        delta1 = (t_j[0] - yj_k[0]) *
+        /*delta1 = (t_j[0] - yj_k[0]) *
             (1 / (2 * Math.pow(((Math.exp(net1_2) + Math.exp(-net1_2)) / 2), 2))),
 
         delta2 = (t_j[1] - yj_k[1]) *
@@ -55,10 +63,22 @@ const methodBackPropagation = (weights, learning_rate) => {
         delta3 = (t_j[2] - yj_k[2]) *
             (1 / (2 * Math.pow(((Math.exp(net3_2) + Math.exp(-net3_2)) / 2), 2))),
 
-        delta1_1 = ((w11_2 * delta1) + (w12_2 * delta2) + (w13_2 * delta3))
-            * (1 / (2 * Math.pow(((Math.exp(net1_1) + Math.exp(-net1_1)) / 2), 2))),
+        delta1_1 = ((w11_2 * delta1) + (w12_2 * delta2) + (w13_2 * delta3)) *
+            (1 / (2 * Math.pow(((Math.exp(net1_1) + Math.exp(-net1_1)) / 2), 2))),
+*/
 
-        epsilon = errorEpsilonCalculation(3, t_j, yj_k)
+        delta1 = (t_j[0] - yj_k[0]) * derivativeActivationFunc(net1_2),
+
+        delta2 = (t_j[1] - yj_k[1]) * derivativeActivationFunc(net2_2),
+
+        delta3 = (t_j[2] - yj_k[2]) * derivativeActivationFunc(net3_2),
+
+        delta1_1 = ((w11_2 * delta1) + (w12_2 * delta2) + (w13_2 * delta3))
+            * derivativeActivationFunc(net1_1),
+
+
+        M = 3,
+        epsilon = errorEpsilonCalculation(M, t_j, yj_k)
 
 
     // коррекция весов 1 слоя
@@ -94,8 +114,15 @@ const epochLearningNeuralNetwork = weights => {
         if (counterEpoch > 100) break
         weights = currentBackPropagationEpoch.weights
         valueError = currentBackPropagationEpoch.epsilon
-        console.log('Epoch=' + counterEpoch, 'Y=' + currentBackPropagationEpoch.y_output,
-            'E=' + valueError, 'weights=' + currentBackPropagationEpoch.weights + '\n')
+
+        console.log(
+            {
+                Epoch: counterEpoch,
+                Y: currentBackPropagationEpoch.y_output,
+                E: valueError,
+                weights: currentBackPropagationEpoch.weights
+            })
+
         counterEpoch++
     } while (valueError > 1e-3)
 }
