@@ -4,11 +4,12 @@ let canvas = document.getElementById('lab06')
 let ctx = canvas.getContext('2d');
 
 class Point {
-    
+
     constructor(x, y) {
         this.x = x
         this.y = y
     }
+
     print() {
         console.log("x= " + this.x + 'y= ' + this.y)
     }
@@ -46,7 +47,7 @@ function calcDistanceManhattan(vectorXCoordinate, vectorYCoordinate) {
             if (i === 0) {
                 let p = Math.abs(vectorYCoordinate[i].x - vectorXCoordinate[j].x)
                     + Math.abs(vectorYCoordinate[i].y - vectorXCoordinate[j].y)
-                    vectorCalcDistanceY1.push(p)
+                vectorCalcDistanceY1.push(p)
             }
             if (i === 1) {
                 let p = Math.abs(vectorYCoordinate[i].x - vectorXCoordinate[j].x)
@@ -63,6 +64,7 @@ function calcDistanceManhattan(vectorXCoordinate, vectorYCoordinate) {
 }
 
 let Y1Cluster = [], Y2Cluster = []
+
 function calcMinDistance(Y1, Y2, vectorX) {
     let Y1_ = [], Y2_ = []
     for (let i = 0; i < Y1.length; i++) {
