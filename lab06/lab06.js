@@ -1,19 +1,15 @@
-/* Алгоритмы кластерного анализа данных */
+/*
+Алгоритмы кластерного анализа данных.
+Исследовать применение основных алгоритмов кластерного анализа,
+включая их модификации, на примере различных типов данных.
+*/
 
-let canvas = document.getElementById('lab06')
-let ctx = canvas.getContext('2d');
-
-class Point {
-
-    constructor(x, y) {
-        this.x = x
-        this.y = y
-    }
-
-    print() {
-        console.log("x= " + this.x + 'y= ' + this.y)
-    }
-}
+let canvas = document.getElementById('lab06'),
+    ctx = canvas.getContext('2d'),
+    position_x = 0,
+    cluster = 0,
+    points = [],
+    clusterPoints = []
 
 function calcDistanceEvklid(vectorXCoordinate, vectorYCoordinate) {
 
@@ -21,14 +17,14 @@ function calcDistanceEvklid(vectorXCoordinate, vectorYCoordinate) {
     for (let i = 0; i < vectorYCoordinate.length; i++) {
         for (let j = 0; j < vectorXCoordinate.length; j++) {
             if (i === 0) {
-                let p = Math.sqrt(((vectorYCoordinate[i].x - vectorXCoordinate[j].x) ** 2)
+                let pij = Math.sqrt(((vectorYCoordinate[i].x - vectorXCoordinate[j].x) ** 2)
                     + ((vectorYCoordinate[i].y - vectorXCoordinate[j].y) ** 2))
-                vectorCalcDistanceY1.push(p)
+                vectorCalcDistanceY1.push(pij)
             }
             if (i === 1) {
-                let p = Math.sqrt(((vectorYCoordinate[i].x - vectorXCoordinate[j].x) ** 2)
+                let pij = Math.sqrt(((vectorYCoordinate[i].x - vectorXCoordinate[j].x) ** 2)
                     + ((vectorYCoordinate[i].y - vectorXCoordinate[j].y) ** 2))
-                vectorCalcDistanceY2.push(p)
+                vectorCalcDistanceY2.push(pij)
             }
         }
     }
@@ -45,14 +41,14 @@ function calcDistanceManhattan(vectorXCoordinate, vectorYCoordinate) {
     for (let i = 0; i < vectorYCoordinate.length; i++) {
         for (let j = 0; j < vectorXCoordinate.length; j++) {
             if (i === 0) {
-                let p = Math.abs(vectorYCoordinate[i].x - vectorXCoordinate[j].x)
+                let pij = Math.abs(vectorYCoordinate[i].x - vectorXCoordinate[j].x)
                     + Math.abs(vectorYCoordinate[i].y - vectorXCoordinate[j].y)
-                vectorCalcDistanceY1.push(p)
+                vectorCalcDistanceY1.push(pij)
             }
             if (i === 1) {
-                let p = Math.abs(vectorYCoordinate[i].x - vectorXCoordinate[j].x)
+                let pij = Math.abs(vectorYCoordinate[i].x - vectorXCoordinate[j].x)
                     + Math.abs(vectorYCoordinate[i].y - vectorXCoordinate[j].y)
-                vectorCalcDistanceY2.push(p)
+                vectorCalcDistanceY2.push(pij)
             }
         }
     }
@@ -63,7 +59,8 @@ function calcDistanceManhattan(vectorXCoordinate, vectorYCoordinate) {
     }
 }
 
-let Y1Cluster = [], Y2Cluster = []
+let Y1Cluster = [],
+    Y2Cluster = []
 
 function calcMinDistance(Y1, Y2, vectorX) {
     let Y1_ = [], Y2_ = []
@@ -80,6 +77,7 @@ function calcMinDistance(Y1, Y2, vectorX) {
 
 function centerOfMassCalc(Y1_, Y2_) {
 
+    let vectorObj = []
     let x_Y1 = 0, y_Y1 = 0,
         x_Y2 = 0, y_Y2 = 0
 
@@ -92,18 +90,21 @@ function centerOfMassCalc(Y1_, Y2_) {
         y_Y2 += Y2_[j].y
     }
 
-    return [x_Y1 / Y1_.length, y_Y1 / Y1_.length, x_Y2 / Y2_.length, y_Y2 / Y2_.length]
+    let Y1Point = {x: x_Y1 / Y1_.length, y: y_Y1 / Y1_.length}
+    let Y2Point = {x: x_Y2 / Y2_.length, y: y_Y2 / Y2_.length}
 
+    vectorObj.push(Y1Point)
+    vectorObj.push(Y2Point)
+
+    return vectorObj
 }
 
-function kMeansAlgorithmEuclidean(vectorXCoordinate, vectorYCoordinate) {
-
-    let pVector = calcDistanceEvklid(vectorXCoordinate, vectorYCoordinate)
+function kMeansAlgorithmEvklid(vectorXCoordinate, vectorYCoordinate) {
+    let pVector = calcDistanceEvklid(points, vectorYCoordinate)
     let minDistanceCluster = calcMinDistance(pVector.Y1Vector,
-        pVector.Y2Vector, vectorXCoordinate)
-
-    return centerOfMassCalc(minDistanceCluster.Y1_, minDistanceCluster.Y2_)
-
+            pVector.Y2Vector, points),
+        center = centerOfMassCalc(minDistanceCluster.Y1_, minDistanceCluster.Y2_)
+    return center
 }
 
 function kMeansAlgorithmManhattan(vectorXCoordinate, vectorYCoordinate) {
@@ -116,108 +117,156 @@ function kMeansAlgorithmManhattan(vectorXCoordinate, vectorYCoordinate) {
 
 }
 
-let position_x = 0,
-    cluster = 0,
-    points = [],
-    clusterPoints = []
+let firstEvklid, firstManhattan
+canvas.addEventListener("click", e => {
 
-
-canvas.addEventListener("click", event => {
 
     if (position_x === 0) {
         ctx.fillStyle = "#000"
-        let x1 = event.offsetX
-        let y1 = event.offsetY
-        let point = new Point(x1, y1)
+        let x = e.offsetX
+        let y = e.offsetY
+        let point = {x, y}
         points.push(point)
         console.log(point)
-        ctx.fillRect(x1, y1, 3, 3)
+        ctx.fillRect(x, y, 3, 3)
         position_x = 1
     } else if (position_x === 1) {
-        let x1 = event.offsetX
-        let y1 = event.offsetY
-        let point = new Point(x1, y1)
+        let x = e.offsetX
+        let y = e.offsetY
+        let point = {x, y}
         points.push(point)
         console.log(point)
-        ctx.fillRect(x1, y1, 3, 3)
+        ctx.fillRect(x, y, 3, 3)
         position_x = 2
     } else if (position_x === 2) {
-        let x1 = event.offsetX
-        let y1 = event.offsetY
-        let point = new Point(x1, y1)
+        let x = e.offsetX
+        let y = e.offsetY
+        let point = {x, y}
         points.push(point)
         console.log(point)
-        ctx.fillRect(x1, y1, 3, 3)
+        ctx.fillRect(x, y, 3, 3)
         position_x = 3
     } else if (position_x === 3) {
-        let x1 = event.offsetX
-        let y1 = event.offsetY
-        let point = new Point(x1, y1)
+        let x = e.offsetX
+        let y = e.offsetY
+        let point = {x, y}
         points.push(point)
         console.log(point)
-        ctx.fillRect(x1, y1, 3, 3)
+        ctx.fillRect(x, y, 3, 3)
         position_x = 4
     } else if (position_x === 4) {
-        let x1 = event.offsetX
-        let y1 = event.offsetY
-        let point = new Point(x1, y1)
+        let x = e.offsetX
+        let y = e.offsetY
+        let point = {x, y}
         points.push(point)
         console.log(point)
-        ctx.fillRect(x1, y1, 3, 3)
+        ctx.fillRect(x, y, 3, 3)
         position_x = 5
     } else if (position_x === 5) {
-        let x1 = event.offsetX
-        let y1 = event.offsetY
-        let point = new Point(x1, y1)
+        let x = e.offsetX
+        let y = e.offsetY
+        let point = {x, y}
         points.push(point)
         console.log(point)
-        ctx.fillRect(x1, y1, 3, 3)
+        ctx.fillRect(x, y, 3, 3)
         position_x = 6
     } else if (position_x === 6) {
-        let x1 = event.offsetX
-        let y1 = event.offsetY
-        let point = new Point(x1, y1)
+        let x = e.offsetX
+        let y = e.offsetY
+        let point = {x, y}
         points.push(point)
         console.log(point)
-        ctx.fillRect(x1, y1, 3, 3)
+        ctx.fillRect(x, y, 3, 3)
         position_x = 7
     } else if (cluster === 0) {
         ctx.fillStyle = "#000"
-        let x1 = event.offsetX, y1 = event.offsetY
-        let point = new Point(x1, y1)
+        let x = e.offsetX
+        let y = e.offsetY
+        let point = {x, y}
         clusterPoints.push(point)
         console.log(point)
-        ctx.fillRect(x1, y1, 8, 8)
+        ctx.fillRect(x, y, 8, 8)
         cluster = 1
     } else if (cluster === 1) {
-        let x1 = event.offsetX, y1 = event.offsetY
-        let point = new Point(x1, y1)
+        let x = e.offsetX
+        let y = e.offsetY
+        let point = {x, y}
         clusterPoints.push(point)
         console.log(point)
-        ctx.fillRect(x1, y1, 8, 8)
+        ctx.fillRect(x, y, 8, 8)
         cluster = 2
     } else if (cluster === 2) {
 
-        let searchCenterEuclidean = kMeansAlgorithmEuclidean(points, clusterPoints)
-        let searchCenterManhattan = kMeansAlgorithmManhattan(points, clusterPoints)
-
         ctx.fillStyle = "#ff0000"
-        ctx.fillRect(searchCenterEuclidean[0], searchCenterEuclidean[1], 8, 8)
-        ctx.fillRect(searchCenterEuclidean[2], searchCenterEuclidean[3], 8, 8)
+        firstEvklid = kMeansAlgorithmEvklid(points, clusterPoints)
+        firstManhattan = kMeansAlgorithmManhattan(points, clusterPoints)
 
-        ctx.fillStyle = "#0400ff"
-        ctx.fillRect(searchCenterManhattan[0], searchCenterManhattan[1], 8, 8)
-        ctx.fillRect(searchCenterManhattan[2], searchCenterManhattan[3], 8, 8)
-
-        for (let i = 0; i < Y1Cluster.length; i++) {
-            ctx.fillStyle = '#97e004'
-            ctx.fillRect(Y1Cluster[i].x, Y1Cluster[i].y, 3, 3)
+        for (let i = 0; i < firstEvklid.length; i++) {
+            ctx.fillRect(Math.round(firstEvklid[i].x), Math.round(firstEvklid[i].y), 8, 8)
         }
 
-        for (let i = 0; i < Y2Cluster.length; i++) {
-            ctx.fillStyle = '#b700ff'
-            ctx.fillRect(Y2Cluster[i].x, Y2Cluster[i].y, 3, 3)
+        for (let i = 0; i < firstManhattan.length; i++) {
+            ctx.fillRect(Math.round(firstManhattan[i].x), Math.round(firstManhattan[i].y), 8, 8)
         }
+
+        ctx.fillStyle = "#000bff"
+        let secondEvklid = kMeansAlgorithmEvklid(points, firstEvklid)
+        let secondManhattan = kMeansAlgorithmManhattan(points, firstManhattan)
+
+        for (let i = 0; i < secondEvklid.length; i++) {
+            ctx.fillRect(Math.round(secondEvklid[i].x), Math.round(secondEvklid[i].y), 8, 8)
+        }
+
+        for (let i = 0; i < secondManhattan.length; i++) {
+            ctx.fillRect(Math.round(secondManhattan[i].x), Math.round(secondManhattan[i].y), 8, 8)
+        }
+
+        ctx.fillStyle = "#49ff00"
+        let thirdEvklid = kMeansAlgorithmEvklid(points, secondEvklid)
+        let thirdManhattan = kMeansAlgorithmManhattan(points, secondManhattan)
+
+        for (let i = 0; i < thirdEvklid.length; i++) {
+            ctx.fillRect(Math.round(thirdEvklid[i].x), Math.round(thirdEvklid[i].y), 8, 8)
+        }
+
+
+        for (let i = 0; i < thirdManhattan.length; i++) {
+            ctx.fillRect(Math.round(thirdManhattan[i].x), Math.round(thirdManhattan[i].y), 8, 8)
+        }
+
+        ctx.fillStyle = "#dc1b5e"
+        let fourthEvklid = kMeansAlgorithmEvklid(points, thirdEvklid)
+        let fourthManhattan = kMeansAlgorithmManhattan(points, thirdManhattan)
+
+        for (let i = 0; i < fourthEvklid.length; i++) {
+            ctx.fillRect(Math.round(fourthEvklid[i].x), Math.round(fourthEvklid[i].y), 8, 8)
+        }
+
+        for (let i = 0; i < fourthManhattan.length; i++) {
+            ctx.fillRect(Math.round(fourthManhattan[i].x), Math.round(fourthManhattan[i].y), 8, 8)
+        }
+
+        console.log(firstEvklid)
+        console.log(secondEvklid)
+        console.log(firstEvklid)
+        console.log(fourthEvklid)
+        console.log('-------------------------------------------')
+        console.log(firstManhattan)
+        console.log(secondManhattan)
+        console.log(thirdManhattan)
+        console.log(fourthManhattan)
+
         cluster = 3
     }
+
+    for (let i = 0; i < Y1Cluster.length; i++) {
+        ctx.fillStyle = '#97e004'
+        ctx.fillRect(Y1Cluster[i].x, Y1Cluster[i].y, 3, 3)
+    }
+
+    for (let i = 0; i < Y2Cluster.length; i++) {
+        ctx.fillStyle = '#b700ff'
+        ctx.fillRect(Y2Cluster[i].x, Y2Cluster[i].y, 3, 3)
+    }
+
 })
